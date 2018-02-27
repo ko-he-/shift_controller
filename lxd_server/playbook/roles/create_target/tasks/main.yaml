@@ -1,0 +1,21 @@
+- name: Create target container
+  shell: "lxc copy {{ item.base }}/ssh-install {{ item.name }}"
+  with_items: "{{ targets }}"
+
+
+- name: Started container (CentOS)
+  lxd_container:
+    name: "{{ item.name }}"
+    state: started
+  with_items: "{{ targets }}"
+
+
+- name: Get container ip
+  shell: "lxc list {{ item.name }} -c 4 | awk '!/IPV4/{ if ( $2 != \"\" && $2 != \"|\") print $2}'"
+  with_items: "{{ targets }}"
+  until: info.stdout != ""
+  register: info
+  retries: 100
+  delay: 3
+
+- debug: var=info

@@ -1,0 +1,3 @@
+[init_lxd]
+192.168.0.2 ansible_ssh_user=root ansible_ssh_pass=password
+

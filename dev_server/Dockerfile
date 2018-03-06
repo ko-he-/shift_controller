@@ -16,18 +16,18 @@ RUN yum -y groupinstall "Development Tools" && \
     make install 
 
 
-# install ansible
+# install ansible(2018/3/6最新化)
 RUN curl -kL https://bootstrap.pypa.io/get-pip.py | python && \
-    pip install paramiko==2.0.2 --upgrade && \
-    pip install pywinrm==0.1.1 --upgrade && \
-    pip install Jinja2==2.8 --upgrade && \
+    pip install paramiko==2.3.1 --upgrade && \
+    pip install pywinrm==0.2.2 --upgrade && \
+    pip install Jinja2==2.9.6 --upgrade && \
     pip install PyYAML==3.12 --upgrade && \
-    pip install setuptools==28.6.1 --upgrade && \
+    pip install setuptools==36.6.0 --upgrade && \
     pip install pycrypto==2.6.1 --upgrade && \
     pip install ansible-lint --upgrade && \
     git clone https://github.com/ansible/ansible.git Ansible && \
     cd ~/Ansible && \
-    git checkout -b v2.0.0.1-1  refs/tags/v2.0.0.1-1 && \
+    git checkout -b v2.4.3.0-1  refs/tags/v2.4.3.0-1 && \
     git submodule update --init --recursive && \
     echo "source Ansible/hacking/env-setup > /dev/null 2>&1" >> /etc/profile.d/shift_ware.sh && \
     sed -e "s/rm -r /rm -rf /g" ./hacking/env-setup -i && \

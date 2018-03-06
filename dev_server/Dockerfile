@@ -59,4 +59,19 @@ RUN git clone https://github.com/ko-he-/my_neovim && \
     cd my_neovim && \
     ./install.sh
 
+# 日本語化	
+RUN yum reinstall -y glibc-common && yum clean all && \
+    localedef -v -c -i ja_JP -f UTF-8 ja_JP.UTF-8; echo "";
+ENV LANG ja_JP.UTF-8
+ENV LANGUAGE ja_JP:ja
+ENV LC_ALL ja_JP.UTF-8
+
+
+# bashrc
+RUN export PATH=$PATH:/root/.rbenv/bin:/root/.rbenv/shims >> .bashrc && \
+    export LANG=ja_JP.UTF-8 && \
+    export LANGUAGE=ja_JP:ja && \
+    export LC_ALL ja_JP.UTF-8
+
+
 CMD ["/usr/sbin/sshd", "-D"]

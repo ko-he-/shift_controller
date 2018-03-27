@@ -68,10 +68,10 @@ ENV LC_ALL ja_JP.UTF-8
 
 
 # bashrc
-RUN export PATH=$PATH:/root/.rbenv/bin:/root/.rbenv/shims >> .bashrc && \
-    export LANG=ja_JP.UTF-8 && \
-    export LANGUAGE=ja_JP:ja && \
-    export LC_ALL ja_JP.UTF-8
+RUN echo 'export PATH=$PATH:/root/.rbenv/bin:/root/.rbenv/shims' >> .bashrc && \
+    echo 'export LANG=ja_JP.UTF-8'  >> .bashrc && \
+    echo 'export LANGUAGE=ja_JP:ja'  >> .bashrc && \
+    echo 'export LC_ALL=ja_JP.UTF-8'  >> .bashrc 
 
 
 CMD ["/usr/sbin/sshd", "-D"]

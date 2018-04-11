@@ -1,0 +1,8 @@
+- debug: 
+        msg: "{{ test_case }}"
+
+- set_fact:
+        test_directory: "{{ shiftware_directory }}/Shift_Env/tests/{{ test_case }}"
+
+
+- include_tasks: "{{ test_directory }}/run.yml"

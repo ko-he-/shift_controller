@@ -1,0 +1,8 @@
+- name: Install LXD
+  include_role:
+          name: run_tests
+          tasks_from: run_test.yml
+  vars:
+          test_case: "{{ item }}"
+  with_items:
+      - "{{ test_cases }}"

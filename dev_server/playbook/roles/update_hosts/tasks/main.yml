@@ -1,0 +1,25 @@
+- debug:
+        msg: "Update etc/hosts"
+
+- name: "Get LXD container list"
+  shell: "sshpass -p {{ host_pass }} ssh {{ host_ip }} -l root -o 'StrictHostKeyChecking no' lxc list -c 4n | grep -v -- -- | sed 's/|//g' | sed 's/(eth0)//g' | tail -n +2"
+  register: lxc_out
+  changed_when: false
+
+- debug:
+        msg: "{{ item.split()[0] }} : {{ item.split()[1] }}"
+  with_items: "{{ lxc_out.stdout_lines }}"
+
+- name: "Copy /etc/hosts to tempfile"
+  shell: '\cp -f /etc/hosts /etc/temp_hosts'
+
+- name: "Update /etc/hosts"
+  lineinfile:
+          dest: /etc/temp_hosts
+          state: present
+          regexp: " {{ item.split()[1] }}"
+          line: "{{item.split()[0]}} {{item.split()[1]}}"
+  with_items: "{{ lxc_out.stdout_lines }}"
+  
+- name: "Copy tempfile to /etc/hosts"
+  shell: '\cp -f /etc/temp_hosts /etc/hosts'

@@ -49,8 +49,8 @@ RUN gem install serverspec -v 2.41.3 && \
     gem install httpclient -v 2.8.3 && \
     gem install pry
 
-# enable ssh
-RUN yum -y install openssh-server && \
+# enable ssh, sshpass
+RUN yum -y install openssh-server sshpass && \
     ssh-keygen -A && \
     echo password | passwd --stdin root
 
@@ -73,5 +73,7 @@ RUN echo 'export PATH=$PATH:/root/.rbenv/bin:/root/.rbenv/shims' >> .bashrc && \
     echo 'export LANGUAGE=ja_JP:ja'  >> .bashrc && \
     echo 'export LC_ALL=ja_JP.UTF-8'  >> .bashrc 
 
+# テスト実行用playbook
+COPY playbook playbook
 
 CMD ["/usr/sbin/sshd", "-D"]

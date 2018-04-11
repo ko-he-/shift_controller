@@ -1,0 +1,169 @@
+- name: Set ipv4.ip_forward 1
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+
+- name: Install LXD
+  apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: yes
+      cache_valid_time: 3600
+  with_items:
+      - lxd
+      - lxd-client
+      - zfsutils-linux
+
+
+- name: Check pool
+  shell: zpool status -v tank
+  register: zpool_check
+  failed_when: False
+  changed_when: False
+
+
+- name: Copy lxd-bridge init file
+  copy:
+      src: lxd-bridge
+      dest: /etc/default/lxd-bridge
+
+- name: Init LXD
+  shell: >
+    lxd init --auto 
+    --storage-backend zfs 
+    --storage-pool tank 
+    --storage-create-loop 20 
+    --network-address 0.0.0.0 
+    --network-port 8443 
+    --trust-password password
+  when: zpool_check.rc == 1
+
+  
+- name: Create a profile
+  lxd_profile:
+      name: ci_profile
+      state: present
+      config: {}
+      description: ci profile
+      devices:
+          eth0:
+              nictype: bridged
+              parent: lxdbr0
+              type: nic
+          eth1:
+              nictype: bridged
+              parent: lxdbr0
+              type: nic
+          eth2:
+              nictype: bridged
+              parent: lxdbr0
+              type: nic
+          eth3:
+              nictype: bridged
+              parent: lxdbr0
+              type: nic
+
+# Ubuntu Container
+- name: Create a started container (Ubuntu)
+  lxd_container:
+    name: base-ubuntu
+    state: started
+    source:
+      type: image
+      mode: pull
+      server: https://images.linuxcontainers.org
+      protocol: lxd
+      alias: ubuntu/xenial/amd64
+    profiles: ["ci_profile"]
+    wait_for_ipv4_addresses: true
+  register: ubuntu
+
+
+- debug: var=ubuntu
+
+
+- name: Set container password
+  shell: lxc exec base-ubuntu -- sh -c "echo root:password | chpasswd"
+  when: ubuntu.changed
+
+
+- name: Install SSH in Container
+  shell: lxc exec base-ubuntu -- apt install -y openssh-server
+  when: ubuntu.changed
+
+
+- name: Arrow PermitRootLogin
+  shell: lxc exec base-ubuntu --  sed -e 's/^PermitRootLogin prohibit-password/PermitRootLogin yes/g' -i /etc/ssh/sshd_config
+  when: ubuntu.changed
+
+
+- name: Restart SSH service in Container
+  shell: lxc exec --mode=interactiv base-ubuntu -- systemctl restart sshd
+  when: ubuntu.changed
+
+
+- name: Create snapshot
+  shell: lxc snapshot base-ubuntu ssh-install
+  when: ubuntu.changed
+
+
+
+# CentOS Container
+- name: CentOS Cersion
+  set_fact:
+    centos_versions:
+      - 6
+      - 7
+
+
+- name: Create a started container (CentOS)
+  lxd_container:
+    name: "base-centos{{ item }}"
+    state: started
+    source:
+      type: image
+      mode: pull
+      server: https://images.linuxcontainers.org
+      protocol: lxd
+      alias: "centos/{{ item }}/amd64"
+    profiles: ["ci_profile"]
+    wait_for_ipv4_addresses: true
+  with_items: "{{ centos_versions }}"
+  register: centos
+
+
+- debug: var=centos
+
+
+- name: Install SSH in Container
+  shell: "lxc exec base-centos{{ item.item }} -- yum install -y openssh-server"
+  with_items: "{{ centos.results }}"
+  when: "{{ item.changed }}"
+
+
+- name: Arrow PermitRootLogin
+  shell: lxc exec base-ubuntu --  sed -e 's/^PermitRootLogin prohibit-password/PermitRootLogin yes/g' -i /etc/ssh/sshd_config
+  with_items: "{{ centos.results }}"
+  when: "{{ item.changed }}"
+
+
+- name: Restart sshd
+  shell: "lxc exec base-centos{{ item.item }} -- service sshd restart"
+  with_items: "{{ centos.results }}"
+  when: "{{ item.changed }}"
+
+
+- name: Set container password
+  shell: "lxc exec base-centos{{ item.item }} -- sh -c 'echo password | passwd --stdin root'"
+  with_items: "{{ centos.results }}"
+  when: "{{ item.changed }}"
+
+
+- name: Create snapshot
+  shell: "lxc snapshot base-centos{{ item.item }} ssh-install"
+  with_items: "{{ centos.results }}"
+  when: "{{ item.changed }}"

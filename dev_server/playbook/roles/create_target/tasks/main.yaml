@@ -1,28 +1,55 @@
 - name: Delete container (CentOS)
   lxd_container:
-    name: "{{ item.name }}"
+    name: "{{ item.value }}"
     state: absent
-  with_items: "{{ targets }}"
+  with_dict: "{{ targets }}"
 
 
 - name: Create target container
-  shell: "lxc copy {{ item.base }}/ssh-install {{ item.name }}"
-  with_items: "{{ targets }}"
+  shell: "lxc copy base-{{ item.key }}/init_snapshot {{ item.value }}"
+  with_dict: "{{ targets }}"
 
 
 - name: Started container (CentOS)
   lxd_container:
-    name: "{{ item.name }}"
+    name: "{{ item.value }}"
     state: started
-  with_items: "{{ targets }}"
+  with_dict: "{{ targets }}"
 
 
 - name: Get container ip
-  shell: "lxc list {{ item.name }} -c 4 | awk '!/IPV4/{ if ( $2 != \"\" && $2 != \"|\") print $2}'"
-  with_items: "{{ targets }}"
+  shell: "lxc list {{ item.value }} -c 4 | awk '!/IPV4/{ if ( $2 != \"\" && $2 != \"|\") print $2}'"
+  with_dict: "{{ targets }}"
   until: info.stdout != ""
   register: info
   retries: 100
   delay: 3
 
 - debug: var=info
+
+- name: Del default yum.repo.d
+  shell: "lxc exec {{ item.value }} -- sh -c 'rm /etc/yum.repos.d/*'"
+  with_dict: "{{ targets }}"
+
+- name: Copy repofile to host
+  copy:
+    src: "base-{{ item.key }}.repo"
+    dest: "/var/tmp/base-{{ item.key }}.repo"
+  with_dict: "{{ targets }}"
+
+- name: Copy repofile to TRG
+  shell: "lxc file push /var/tmp/base-{{ item.key }}.repo {{ item.value }}/etc/yum.repos.d/"
+  with_dict: "{{ targets }}"
+
+- name: Del /etc/resolv.conf
+  shell: "lxc exec {{ item.value }} -- sh -c 'echo > /etc/resolv.conf'"
+  with_dict: "{{ targets }}"
+
+
+- name: "Set PEERDNS=no"
+  shell: "lxc exec {{ item.value }} -- sh -c 'echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth0'"
+  with_dict: "{{ targets }}"
+
+- name: Create snapshot
+  shell: "lxc snapshot {{ item.value }} init_snapshot"
+  with_dict: "{{ targets }}"

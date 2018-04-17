@@ -42,6 +42,10 @@
     --trust-password password
   when: zpool_check.rc == 1
 
+
+- name: Set proxy
+  shell: lxc config set core.proxy_http {{ proxy }}; lxc config set core.proxy_https {{ proxy }}
+  when: proxy is defined
   
 - name: Create a profile
   lxd_profile:
@@ -68,47 +72,47 @@
               type: nic
 
 # Ubuntu Container
-- name: Create a started container (Ubuntu)
-  lxd_container:
-    name: base-ubuntu
-    state: started
-    source:
-      type: image
-      mode: pull
-      server: https://images.linuxcontainers.org
-      protocol: lxd
-      alias: ubuntu/xenial/amd64
-    profiles: ["ci_profile"]
-    wait_for_ipv4_addresses: true
-  register: ubuntu
+#- name: Create a started container (Ubuntu)
+#  lxd_container:
+#    name: base-ubuntu
+#    state: started
+#    source:
+#      type: image
+#      mode: pull
+#      server: https://images.linuxcontainers.org
+#      protocol: lxd
+#      alias: ubuntu/xenial/amd64
+#    profiles: ["ci_profile"]
+#    wait_for_ipv4_addresses: true
+#  register: ubuntu
 
 
-- debug: var=ubuntu
+#- debug: var=ubuntu
 
 
-- name: Set container password
-  shell: lxc exec base-ubuntu -- sh -c "echo root:password | chpasswd"
-  when: ubuntu.changed
+#- name: Set container password
+#  shell: lxc exec base-ubuntu -- sh -c "echo root:password | chpasswd"
+#  when: ubuntu.changed
 
 
-- name: Install SSH in Container
-  shell: lxc exec base-ubuntu -- apt install -y openssh-server
-  when: ubuntu.changed
+#- name: Install SSH in Container
+#  shell: lxc exec base-ubuntu -- apt install -y openssh-server
+#  when: ubuntu.changed
 
 
-- name: Arrow PermitRootLogin
-  shell: lxc exec base-ubuntu --  sed -e 's/^PermitRootLogin prohibit-password/PermitRootLogin yes/g' -i /etc/ssh/sshd_config
-  when: ubuntu.changed
+#- name: Arrow PermitRootLogin
+#  shell: lxc exec base-ubuntu --  sed -e 's/^PermitRootLogin prohibit-password/PermitRootLogin yes/g' -i /etc/ssh/sshd_config
+#  when: ubuntu.changed
 
 
-- name: Restart SSH service in Container
-  shell: lxc exec --mode=interactiv base-ubuntu -- systemctl restart sshd
-  when: ubuntu.changed
+#- name: Restart SSH service in Container
+#  shell: lxc exec --mode=interactiv base-ubuntu -- systemctl restart sshd
+#  when: ubuntu.changed
 
 
-- name: Create snapshot
-  shell: lxc snapshot base-ubuntu ssh-install
-  when: ubuntu.changed
+#- name: Create snapshot
+#  shell: lxc snapshot base-ubuntu ssh-install
+#  when: ubuntu.changed
 
 
 
@@ -138,17 +142,15 @@
 
 - debug: var=centos
 
-
 - name: Install SSH in Container
-  shell: "lxc exec base-centos{{ item.item }} -- yum install -y openssh-server"
+  shell: "lxc exec base-centos{{ item.item }} -- env http_proxy={{ proxy }} https_proxy={{ proxy }} yum install -y openssh-server"
   with_items: "{{ centos.results }}"
   when: "{{ item.changed }}"
 
-
-- name: Arrow PermitRootLogin
-  shell: lxc exec base-ubuntu --  sed -e 's/^PermitRootLogin prohibit-password/PermitRootLogin yes/g' -i /etc/ssh/sshd_config
-  with_items: "{{ centos.results }}"
-  when: "{{ item.changed }}"
+#- name: Arrow PermitRootLogin
+#  shell: "lxc exec base-ubuntu --  sed -e 's/^PermitRootLogin prohibit-password/PermitRootLogin yes/g' -i /etc/ssh/sshd_config"
+#  with_items: "{{ centos.results }}"
+#  when: "{{ item.changed }}"
 
 
 - name: Restart sshd
@@ -164,6 +166,6 @@
 
 
 - name: Create snapshot
-  shell: "lxc snapshot base-centos{{ item.item }} ssh-install"
+  shell: "lxc snapshot base-centos{{ item.item }} init_snapshot"
   with_items: "{{ centos.results }}"
   when: "{{ item.changed }}"

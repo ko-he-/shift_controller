@@ -1,12 +1,14 @@
-- hosts: init_lxd
-  sudo: yes
-  roles:
-    - init_lxd
 - hosts: create_target
   sudo: yes
   roles:
     - create_target
+
+- hosts: update_hosts
+  sudo: yes
+  roles:
+    - update_hosts
+
 - hosts: run_tests
   sudo: yes
-  role:
+  roles:
     - run_tests

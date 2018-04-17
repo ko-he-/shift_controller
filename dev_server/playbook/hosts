@@ -1,0 +1,6 @@
+[create_target]
+172.17.0.1 ansible_ssh_user=root ansible_ssh_pass=p@ssw0rd
+[update_hosts]
+localhost ansible_connection=local
+[run_tests]
+localhost ansible_connection=local

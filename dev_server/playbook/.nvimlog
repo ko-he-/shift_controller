@@ -1,2 +1,0 @@
-2018/04/09 07:17:47 INFO  316 channel_create_event:231: new channel 3 (job): function dein#install[1]..dein#install#_update[35]..<SNR>15_update_loop[5]..<SNR>15_install_async[5]..<SNR>15_check_loop[5]..<SNR>15_sync[39]..<SNR>15_init_process[40]..<SNR>15_init_job[66]..<SNR>18_start[2]..<SNR>20_start:14
-2018/04/09 07:17:51 INFO  316 main:567: starting main loop

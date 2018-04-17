@@ -4,5 +4,8 @@
 - set_fact:
         test_directory: "{{ shiftware_directory }}/Shift_Env/tests/{{ test_case }}"
 
+- name: Init TRG
+  shell: "sshpass -p {{ host_pass }} ssh {{ host_ip }} -l root -o 'StrictHostKeyChecking no' lxc restore {{ item.value }} init_snapshot"
+  with_dict: "{{ targets }}"
 
 - include_tasks: "{{ test_directory }}/run.yml"

@@ -1,0 +1,5 @@
+[shift]
+name=Repository for SHIFT ware
+baseurl=http://192.168.128.32/rhel6
+enabled=1
+gpgcheck=0

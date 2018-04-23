@@ -64,4 +64,9 @@ Ubuntu Server 16.04.3 LTS (Xenial Xerus)
 ```
 
 
+## ターゲットの作成からテスト実行までまとめて実行
+
+```
+# ansible-playbook -i hosts site.yaml
+```
 

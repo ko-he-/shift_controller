@@ -42,6 +42,9 @@
     --trust-password password
   when: zpool_check.rc == 1
 
+- name: dpkg-reconfigure
+  shell: dpkg-reconfigure -p medium lxd -f noninteractive
+  when: zpool_check.rc == 1
 
 - name: Set proxy
   shell: lxc config set core.proxy_http {{ proxy }}; lxc config set core.proxy_https {{ proxy }}
@@ -141,6 +144,11 @@
 
 
 - debug: var=centos
+
+- name: yum update
+  shell: "lxc exec base-centos{{ item.item }} -- env http_proxy={{ proxy }} https_proxy={{ proxy }} yum update -y"
+  with_items: "{{ centos.results }}"
+  when: "{{ item.changed }}"
 
 - name: Install SSH in Container
   shell: "lxc exec base-centos{{ item.item }} -- env http_proxy={{ proxy }} https_proxy={{ proxy }} yum install -y openssh-server"

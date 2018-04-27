@@ -4,6 +4,8 @@
     state: absent
   with_dict: "{{ targets }}"
 
+- name: arp clear
+  shell: "ip -s -s neigh flush all"
 
 - name: Create target container
   shell: "lxc copy base-{{ item.key }}/init_snapshot {{ item.value }}"
@@ -44,7 +46,6 @@
 - name: Del /etc/resolv.conf
   shell: "lxc exec {{ item.value }} -- sh -c 'echo > /etc/resolv.conf'"
   with_dict: "{{ targets }}"
-
 
 - name: "Set PEERDNS=no"
   shell: "lxc exec {{ item.value }} -- sh -c 'echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth0'"
